@@ -94,8 +94,8 @@ USER $USER_UID
 # Set working directory
 WORKDIR /home/$USERNAME
 
-# Clone Neovim configuration into the container
-RUN git clone https://github.com/spagdoon0411/nvim.git /home/$USERNAME/.config/nvim
+# Clone Neovim configuration into the container (master branch)
+RUN git clone --branch master --single-branch https://github.com/spagdoon0411/nvim.git /home/$USERNAME/.config/nvim
 
 # Install Rust for the user (for rust-analyzer)
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
