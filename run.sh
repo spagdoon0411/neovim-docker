@@ -38,14 +38,16 @@ fi
 ACTUAL_USER=${SUDO_USER:-$(whoami)}
 ACTUAL_HOME=$(eval echo ~$ACTUAL_USER)
 
+# Mount host home at /host for file access
+# Container uses its own HOME with nvim config baked in
+ACTUAL_USER=${SUDO_USER:-$(whoami)}
+ACTUAL_HOME=$(eval echo ~$ACTUAL_USER)
+
 docker run -it --rm \
     $PLATFORM \
     --name $CONTAINER_NAME \
-    -v "$ACTUAL_HOME:$ACTUAL_HOME" \
-    -w "$(pwd)" \
-    -e HOME="$ACTUAL_HOME" \
-    -e USER="$ACTUAL_USER" \
-    -e XDG_DATA_HOME="$ACTUAL_HOME/.local/share-container" \
+    -v "$ACTUAL_HOME:/host" \
+    -w /host \
     -e TERM="${TERM:-xterm-256color}" \
     -e COLORTERM=truecolor \
     --network host \

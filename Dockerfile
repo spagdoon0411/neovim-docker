@@ -94,17 +94,23 @@ USER $USER_UID
 # Set working directory
 WORKDIR /home/$USERNAME
 
+# Clone Neovim configuration into the container
+RUN git clone https://github.com/spagdoon0411/nvim.git /home/$USERNAME/.config/nvim
+
 # Install Rust for the user (for rust-analyzer)
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/home/$USERNAME/.cargo/bin:${PATH}"
 
-# Create container-specific data directory for plugins
-RUN mkdir -p /home/$USERNAME/.local/share-container
+# Bootstrap lazy.nvim and install plugins
+RUN git clone --filter=blob:none https://github.com/folke/lazy.nvim.git \
+    /home/$USERNAME/.local/share/nvim/lazy/lazy.nvim
+
+# Pre-install plugins (optional - removes first-run delay)
+RUN nvim --headless "+Lazy! sync" +qa || true
 
 # Set environment variables
 ENV SHELL=/bin/bash
 ENV EDITOR=nvim
-ENV XDG_DATA_HOME=/home/$USERNAME/.local/share-container
 # Terminal color support
 ENV TERM=xterm-256color
 ENV COLORTERM=truecolor

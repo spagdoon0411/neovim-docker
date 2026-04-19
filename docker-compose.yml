@@ -15,12 +15,10 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      # Mount your home directory
-      - ${HOME}:${HOME}
-    working_dir: ${HOME}
+      # Mount host home at /host
+      - ${HOME}:/host
+    working_dir: /host
     environment:
-      - HOME=${HOME}
-      - USER=${USER}
       - TERM=${TERM:-xterm-256color}
       - COLORTERM=truecolor
     network_mode: host

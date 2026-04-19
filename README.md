@@ -25,25 +25,34 @@ A Docker container with Neovim that mounts your home directory, allowing you to 
 git clone <your-repo-url> nvim-docker
 cd nvim-docker
 chmod +x run.sh
+
+# If Docker requires sudo on your system
+sudo ./run.sh
+
+# Otherwise
 ./run.sh
 ```
+
+The first run will build the image (takes ~10-15 minutes), clone the Neovim config, and pre-install all plugins.
 
 ### Usage
 
-**Open a bash shell in the container:**
+Once inside the container:
+
 ```bash
-./run.sh
+# Your host home directory is mounted at /host
+cd /host/your-project
+
+# Edit files with Neovim
+nvim file.txt
+
+# All your files are accessible under /host
+ls /host
 ```
 
-**Run Neovim directly with a file:**
+**Pass commands directly:**
 ```bash
-./run.sh nvim myfile.txt
-```
-
-**Run any command:**
-```bash
-./run.sh ls -la
-./run.sh git status
+./run.sh nvim /host/file.txt
 ```
 
 ### Using Docker Compose
@@ -103,14 +112,13 @@ docker run -it --rm \
 
 ## How It Works
 
-- Your home directory (`~`) is mounted at the same path inside the container
-- Your Neovim config at `~/.config/nvim` is automatically available
-- All file paths remain consistent between host and container
-- The container runs as your user, so file permissions are preserved
-- Network access is available for installing plugins, LSP servers, etc.
-- Plugins are stored in `~/.local/share-container/` to keep them separate from host plugins
-- On first run, Neovim will automatically install all plugins via Lazy.nvim
-- Mason will install LSP servers (lua_ls, clangd, rust-analyzer, eslint, etc.) on demand
+- Neovim configuration is baked into the container (cloned from https://github.com/spagdoon0411/nvim)
+- Your host home directory is mounted at `/host` inside the container
+- The container starts in `/host` so you can immediately access your files
+- The container runs as a user matching your UID/GID for proper file permissions
+- Plugins are pre-installed during the image build
+- LSP servers are installed on-demand via Mason when you open files
+- Network access is available for updates and additional tools
 
 ## Customization
 
@@ -133,7 +141,9 @@ Replace `ubuntu:24.04` with another base like `ubuntu:22.04` or `debian:bookworm
 ## Requirements
 
 - Docker installed on your system
-- Your Neovim configuration at `~/.config/nvim` (or will use Neovim defaults)
+- On Linux, either:
+  - Add your user to the `docker` group: `sudo usermod -aG docker $USER && newgrp docker`
+  - Or run the script with `sudo`
 
 ## Notes
 
