@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  nvim:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USER}
+        USER_UID: 1000
+        USER_GID: 1000
+    image: nvim-dev:latest
+    container_name: nvim-dev
+    stdin_open: true
+    tty: true
+    volumes:
+      # Mount your home directory
+      - ${HOME}:${HOME}
+    working_dir: ${HOME}
+    environment:
+      - HOME=${HOME}
+      - USER=${USER}
+    network_mode: host
