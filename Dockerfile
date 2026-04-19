@@ -74,10 +74,18 @@ ARG USER_GID=$USER_UID
 
 # Create group and user only if not running as root (UID 0)
 RUN if [ "$USER_UID" != "0" ]; then \
+        # Create group if it doesn't exist
         if ! getent group $USER_GID >/dev/null; then \
             groupadd --gid $USER_GID $USERNAME; \
         fi && \
-        useradd --uid $USER_UID --gid $USER_GID -m $USERNAME; \
+        # Check if UID already exists, if so modify it, otherwise create new user
+        if getent passwd $USER_UID >/dev/null; then \
+            EXISTING_USER=$(getent passwd $USER_UID | cut -d: -f1) && \
+            usermod -l $USERNAME -d /home/$USERNAME -m $EXISTING_USER && \
+            groupmod -n $USERNAME $EXISTING_USER 2>/dev/null || true; \
+        else \
+            useradd --uid $USER_UID --gid $USER_GID -m $USERNAME; \
+        fi \
     fi
 
 # Switch to the specified user (or stay root if UID is 0)
