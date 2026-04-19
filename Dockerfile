@@ -72,30 +72,36 @@ ARG USERNAME=vimuser
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
-# Create group only if it doesn't exist, then create user
-RUN if ! getent group $USER_GID >/dev/null; then \
-        groupadd --gid $USER_GID $USERNAME; \
-    fi \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+# Create group and user only if not running as root (UID 0)
+RUN if [ "$USER_UID" != "0" ]; then \
+        if ! getent group $USER_GID >/dev/null; then \
+            groupadd --gid $USER_GID $USERNAME; \
+        fi && \
+        useradd --uid $USER_UID --gid $USER_GID -m $USERNAME; \
+    fi
 
-# Switch to non-root user
-USER $USERNAME
+# Switch to the specified user (or stay root if UID is 0)
+USER $USER_UID
 
-# Set working directory to user's home
-WORKDIR /home/$USERNAME
+# Set working directory based on user
+RUN if [ "$USER_UID" = "0" ]; then \
+        echo "Running as root"; \
+    fi
 
-# Install Rust for the non-root user (for rust-analyzer)
+WORKDIR /root
+
+# Install Rust for the user (for rust-analyzer)
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/home/$USERNAME/.cargo/bin:${PATH}"
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Create container-specific data directory for plugins
-RUN mkdir -p /home/$USERNAME/.local/share/nvim-container
+RUN mkdir -p /root/.local/share-container
 
 # Set environment variables
 ENV SHELL=/bin/bash
 ENV EDITOR=nvim
-# Use container-specific data directory for plugins
-ENV XDG_DATA_HOME=/home/$USERNAME/.local/share-container
+# Use container-specific data directory for plugins (will be overridden at runtime)
+ENV XDG_DATA_HOME=/root/.local/share-container
 # Terminal color support
 ENV TERM=xterm-256color
 ENV COLORTERM=truecolor

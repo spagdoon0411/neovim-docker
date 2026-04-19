@@ -14,10 +14,16 @@ if [[ "$(docker images -q $IMAGE_NAME 2> /dev/null)" == "" ]]; then
     if [[ "$(uname -m)" == "arm64" ]]; then
         PLATFORM="--platform linux/arm64"
     fi
+
+    # Get actual user info (not root even if running with sudo)
+    ACTUAL_USER=${SUDO_USER:-$(whoami)}
+    ACTUAL_UID=${SUDO_UID:-$(id -u)}
+    ACTUAL_GID=${SUDO_GID:-$(id -g)}
+
     docker build $PLATFORM -t $IMAGE_NAME \
-        --build-arg USERNAME=$(whoami) \
-        --build-arg USER_UID=$(id -u) \
-        --build-arg USER_GID=$(id -g) \
+        --build-arg USERNAME=$ACTUAL_USER \
+        --build-arg USER_UID=$ACTUAL_UID \
+        --build-arg USER_GID=$ACTUAL_GID \
         .
 fi
 
@@ -28,14 +34,18 @@ if [[ "$(uname -m)" == "arm64" ]]; then
     PLATFORM="--platform linux/arm64"
 fi
 
+# Get actual user info (not root even if running with sudo)
+ACTUAL_USER=${SUDO_USER:-$(whoami)}
+ACTUAL_HOME=$(eval echo ~$ACTUAL_USER)
+
 docker run -it --rm \
     $PLATFORM \
     --name $CONTAINER_NAME \
-    -v "$HOME:$HOME" \
+    -v "$ACTUAL_HOME:$ACTUAL_HOME" \
     -w "$(pwd)" \
-    -e HOME="$HOME" \
-    -e USER="$(whoami)" \
-    -e XDG_DATA_HOME="$HOME/.local/share-container" \
+    -e HOME="$ACTUAL_HOME" \
+    -e USER="$ACTUAL_USER" \
+    -e XDG_DATA_HOME="$ACTUAL_HOME/.local/share-container" \
     -e TERM="${TERM:-xterm-256color}" \
     -e COLORTERM=truecolor \
     --network host \
