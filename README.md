@@ -5,11 +5,17 @@ A Docker container with Neovim that mounts your home directory, allowing you to 
 ## Features
 
 - Ubuntu 24.04 base
-- Latest Neovim with Python and Node.js support
+- Latest stable Neovim (installed from GitHub releases)
+- Node.js 20 LTS (from NodeSource)
+- Python 3 with pip and venv
+- Rust toolchain (rustup, cargo, rust-analyzer)
+- C/C++ toolchain (clang, clangd, cmake, ninja)
 - Essential development tools (git, ripgrep, fd-find, curl, wget)
+- Clipboard support (xclip, wl-clipboard)
 - Mounts your entire home directory preserving paths
 - Preserves your existing `~/.config/nvim` configuration
 - Runs as your user (not root) with matching UID/GID
+- Container-specific plugin directory to avoid host/container conflicts
 
 ## Quick Start
 
@@ -57,7 +63,15 @@ docker-compose down
 
 **Build:**
 ```bash
-docker build -t nvim-dev:latest \
+# On Apple Silicon (M1/M2/M3)
+docker build --platform linux/arm64 -t nvim-dev:latest \
+  --build-arg USERNAME=$(whoami) \
+  --build-arg USER_UID=$(id -u) \
+  --build-arg USER_GID=$(id -g) \
+  .
+
+# On Intel/AMD (x86_64)
+docker build --platform linux/amd64 -t nvim-dev:latest \
   --build-arg USERNAME=$(whoami) \
   --build-arg USER_UID=$(id -u) \
   --build-arg USER_GID=$(id -g) \
@@ -66,7 +80,19 @@ docker build -t nvim-dev:latest \
 
 **Run:**
 ```bash
+# On Apple Silicon (M1/M2/M3)
 docker run -it --rm \
+  --platform linux/arm64 \
+  -v $HOME:$HOME \
+  -w $(pwd) \
+  -e HOME=$HOME \
+  -e USER=$(whoami) \
+  --network host \
+  nvim-dev:latest
+
+# On Intel/AMD (x86_64)
+docker run -it --rm \
+  --platform linux/amd64 \
   -v $HOME:$HOME \
   -w $(pwd) \
   -e HOME=$HOME \
@@ -82,6 +108,9 @@ docker run -it --rm \
 - All file paths remain consistent between host and container
 - The container runs as your user, so file permissions are preserved
 - Network access is available for installing plugins, LSP servers, etc.
+- Plugins are stored in `~/.local/share-container/` to keep them separate from host plugins
+- On first run, Neovim will automatically install all plugins via Lazy.nvim
+- Mason will install LSP servers (lua_ls, clangd, rust-analyzer, eslint, etc.) on demand
 
 ## Customization
 

@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   nvim:
+    platform: linux/arm64  # Use linux/amd64 on Intel machines
     build:
       context: .
       dockerfile: Dockerfile
@@ -20,4 +21,6 @@ services:
     environment:
       - HOME=${HOME}
       - USER=${USER}
+      - TERM=${TERM:-xterm-256color}
+      - COLORTERM=truecolor
     network_mode: host
