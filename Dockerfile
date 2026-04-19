@@ -91,25 +91,20 @@ RUN if [ "$USER_UID" != "0" ]; then \
 # Switch to the specified user (or stay root if UID is 0)
 USER $USER_UID
 
-# Set working directory based on user
-RUN if [ "$USER_UID" = "0" ]; then \
-        echo "Running as root"; \
-    fi
-
-WORKDIR /root
+# Set working directory
+WORKDIR /home/$USERNAME
 
 # Install Rust for the user (for rust-analyzer)
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
+ENV PATH="/home/$USERNAME/.cargo/bin:${PATH}"
 
 # Create container-specific data directory for plugins
-RUN mkdir -p /root/.local/share-container
+RUN mkdir -p /home/$USERNAME/.local/share-container
 
 # Set environment variables
 ENV SHELL=/bin/bash
 ENV EDITOR=nvim
-# Use container-specific data directory for plugins (will be overridden at runtime)
-ENV XDG_DATA_HOME=/root/.local/share-container
+ENV XDG_DATA_HOME=/home/$USERNAME/.local/share-container
 # Terminal color support
 ENV TERM=xterm-256color
 ENV COLORTERM=truecolor
